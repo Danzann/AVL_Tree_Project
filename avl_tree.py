@@ -1,33 +1,40 @@
-class AVLNode:
-    def __init__(self, key, height=1):
+class AVLTreeNode:
+    def __init__(self, key):
         self.key = key
-        self.height = height
         self.left = None
         self.right = None
+        self.height = 1
 
 class AVLTree:
     def __init__(self):
         self.root = None
 
-    # Получение высоты узла
+    # Получить высоту узла
     def get_height(self, node):
-        return node.height if node else 0
+        if not node:
+            return 0
+        return node.height
 
-    # Расчет баланса узла
+    # Получить баланс узла
     def get_balance(self, node):
-        return self.get_height(node.left) - self.get_height(node.right) if node else 0
+        if not node:
+            return 0
+        return self.get_height(node.left) - self.get_height(node.right)
 
     # Поворот вправо
     def rotate_right(self, y):
         x = y.left
         T2 = x.right
 
+        # Выполняем поворот
         x.right = y
         y.left = T2
 
-        y.height = 1 + max(self.get_height(y.left), self.get_height(y.right))
-        x.height = 1 + max(self.get_height(x.left), self.get_height(x.right))
+        # Обновляем высоты
+        y.height = max(self.get_height(y.left), self.get_height(y.right)) + 1
+        x.height = max(self.get_height(x.left), self.get_height(x.right)) + 1
 
+        # Возвращаем новый корень
         return x
 
     # Поворот влево
@@ -35,58 +42,87 @@ class AVLTree:
         y = x.right
         T2 = y.left
 
+        # Выполняем поворот
         y.left = x
         x.right = T2
 
-        x.height = 1 + max(self.get_height(x.left), self.get_height(x.right))
-        y.height = 1 + max(self.get_height(y.left), self.get_height(y.right))
+        # Обновляем высоты
+        x.height = max(self.get_height(x.left), self.get_height(x.right)) + 1
+        y.height = max(self.get_height(y.left), self.get_height(y.right)) + 1
 
+        # Возвращаем новый корень
         return y
 
-    # Вставка узла
-    def insert(self, node, key):
-        if not node:
-            return AVLNode(key)
+    # Вставка нового узла
+    def insert(self, root, key):
+        if not root:
+            return AVLTreeNode(key)
 
-        if key < node.key:
-            node.left = self.insert(node.left, key)
-        elif key > node.key:
-            node.right = self.insert(node.right, key)
+        # Вставляем ключ в дерево
+        if key < root.key:
+            root.left = self.insert(root.left, key)
         else:
-            return node  # Дубликаты не допускаются
+            root.right = self.insert(root.right, key)
 
-        node.height = 1 + max(self.get_height(node.left), self.get_height(node.right))
+        # Обновляем высоту текущего узла
+        root.height = 1 + max(self.get_height(root.left), self.get_height(root.right))
 
-        balance = self.get_balance(node)
+        # Проверяем баланс и выполняем повороты, если необходимо
+        balance = self.get_balance(root)
 
-        # Левый Левый случай
-        if balance > 1 and key < node.left.key:
-            return self.rotate_right(node)
+        # Левый левый случай
+        if balance > 1 and key < root.left.key:
+            return self.rotate_right(root)
 
-        # Правый Правый случай
-        if balance < -1 and key > node.right.key:
-            return self.rotate_left(node)
+        # Правый правый случай
+        if balance < -1 and key > root.right.key:
+            return self.rotate_left(root)
 
-        # Левый Правый случай
-        if balance > 1 and key > node.left.key:
-            node.left = self.rotate_left(node.left)
-            return self.rotate_right(node)
+        # Левый правый случай
+        if balance > 1 and key > root.left.key:
+            root.left = self.rotate_left(root.left)
+            return self.rotate_right(root)
 
-        # Правый Левый случай
-        if balance < -1 and key < node.right.key:
-            node.right = self.rotate_right(node.right)
-            return self.rotate_left(node)
+        # Правый левый случай
+        if balance < -1 and key < root.right.key:
+            root.right = self.rotate_right(root.right)
+            return self.rotate_left(root)
 
-        return node
+        return root
 
+    # Вставка нового ключа в АВЛ-дерево
     def insert_key(self, key):
         self.root = self.insert(self.root, key)
 
-    # Обход дерева для тестов
-    def in_order_traversal(self, node):
-        if node:
-            return self.in_order_traversal(node.left) + [node.key] + self.in_order_traversal(node.right)
-        return []
+    # Обход дерева in-order (по возрастанию)
+    def inorder(self, root):
+        if not root:
+            return []
+        return self.inorder(root.left) + [root.key] + self.inorder(root.right)
 
+    # Вывод дерева
     def display_tree(self):
-        return self.in_order_traversal(self.root)
+        return self.inorder(self.root)
+
+# Тестирование
+def test_avl_tree():
+    avl_tree = AVLTree()
+    
+    # Вставляем элементы
+    avl_tree.insert_key(10)
+    avl_tree.insert_key(20)
+    avl_tree.insert_key(5)
+    avl_tree.insert_key(6)
+    avl_tree.insert_key(15)
+
+    # Выводим элементы дерева в порядке возрастания
+    print("Дерево после вставки: ", avl_tree.display_tree())
+
+    # Добавляем еще элементы
+    avl_tree.insert_key(3)
+    avl_tree.insert_key(30)
+    
+    # Выводим обновленное дерево
+    print("Дерево после вставки еще нескольких элементов: ", avl_tree.display_tree())
+
+test_avl_tree()
